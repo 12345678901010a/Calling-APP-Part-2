@@ -3,38 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord P2P Chat via Supabase</title>
+    <title>Discord Chat Client</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="chat-container">
-        <div class="header">
-            <h2># school-p2p-chat</h2>
-            
-            <div class="id-section">
-                <span>YOUR CHAT ID:</span> <span id="my-id" class="id-value">Generating...</span>
-            </div>
-
-            <div class="connect-section">
-                <input type="text" id="nickname-input" placeholder="Set your nickname..." value="ChromebookUser">
+    <div class="app-container">
+        <!-- Sidebar Navigation Elements -->
+        <div class="sidebar">
+            <div class="profile-area">
+                <span>NICKNAME:</span>
+                <input type="text" id="nickname-input" value="ChromebookUser" style="width:90%; background:#1e1f22; border:none; color:white; padding:4px; margin-top:4px; border-radius:4px;">
+                <span style="display:block; margin-top:8px;">YOUR CHAT ID:</span>
+                <span id="my-id" class="my-id-tag">Generating...</span>
             </div>
             
-            <div class="connect-section">
-                <input type="text" id="peer-id-input" placeholder="Enter friend's Chat ID...">
-                <button id="connect-btn">Connect</button>
+            <div class="friend-controls">
+                <input type="text" id="friend-id-input" placeholder="Enter friend's Chat ID...">
+                <button id="add-friend-btn">Add Friend</button>
+            </div>
+            
+            <div class="friends-list-container" id="friends-list">
+                <!-- Added friends dynamically populate down here -->
             </div>
         </div>
 
-        <div id="chat-box"></div>
-        
-        <div class="input-section">
-            <input type="text" id="message-input" placeholder="Message #school-p2p-chat">
-            <button id="send-btn">Send</button>
+        <!-- Main Window Area -->
+        <div class="main-chat">
+            <div class="chat-header" id="active-chat-title"># select-a-friend</div>
+            <div id="chat-box"></div>
+            
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" id="message-input" placeholder="Select a friend to message..." disabled>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Calls app directly to skip dependency blocks -->
     <script src="app.js"></script>
 </body>
 </html>
