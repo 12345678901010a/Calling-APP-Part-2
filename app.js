@@ -1,10 +1,9 @@
-// VIBECORD SYSTEM CREDENTIALS CONFIGURATION
+// CHUNK 1: SYSTEM CREDENTIALS & CACHE STATE VARIABLES
 const SUPABASE_URL = "https://supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_L2bIt4md08OvoEg0iqDaxg_DbjVEMCf";
-
 const ADMIN_PASSWORD = "mysecretadminpass"; 
 
-// Create a unique Chat ID based on a random string generator layer
+// Create a unique local Chat ID structure
 const myId = "user_" + Math.random().toString(36).substring(2, 9);
 let activePeerId = null;
 let myNickname = "Guest";
@@ -15,6 +14,7 @@ let cachedUsername = "";
 let cachedPassword = "";
 let activeAuthMode = "credentials"; 
 
+// Initialize local caching system dictionaries
 let friendsMap = JSON.parse(localStorage.getItem('chat_friends_list')) || {};
 let messagesDatabase = JSON.parse(localStorage.getItem('chat_history_cache')) || {};
 
@@ -27,12 +27,8 @@ const friendsListContainer = document.getElementById('friends-list');
 const activeChatTitle = document.getElementById('active-chat-title');
 const chatBox = document.getElementById('chat-box');
 const messageInput = document.getElementById('message-input');
-const adminEntryBtn = document.getElementById('admin-entry-btn');
+// CHUNK 2: SCREEN NAVIGATION AND SELECTION CONTROL PIPELINES
 
-if (myIdDisplay) myIdDisplay.innerText = myId;
-renderFriendsList();
-
-// Navigation Controls
 window.transitionToAuth = function(mode) {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('auth-screen').style.display = 'flex';
@@ -49,10 +45,15 @@ window.selectAuthMethod = function(method) {
     }
 };
 
-window.openHelpPanel = function() { document.getElementById('help-modal').style.display = 'flex'; };
-window.closeHelpPanel = function() { document.getElementById('help-modal').style.display = 'none'; };
+window.openHelpPanel = function() { 
+    document.getElementById('help-modal').style.display = 'flex'; 
+};
 
-// Path A: Username & Password Registration Engine
+window.closeHelpPanel = function() { 
+    document.getElementById('help-modal').style.display = 'none'; 
+};
+// CHUNK 3: REGISTRATION PROCESSING & PIN DISPATCH MODULES
+
 window.handleAuthRegistration = async function() {
     const email = document.getElementById('auth-email').value.trim();
     const username = document.getElementById('auth-username').value.trim();
@@ -62,13 +63,12 @@ window.handleAuthRegistration = async function() {
     if (errorDisplay) errorDisplay.innerText = ""; 
 
     if (!email || !username || !password) {
-        if (errorDisplay) errorDisplay.innerText = "Error: All registration parameters are required.";
+        if (errorDisplay) errorDisplay.innerText = "Error: All parameters are required.";
         return;
     }
 
-    // Enforce Password Rule: Must be exactly 8-10 characters long
     if (password.length < 8 || password.length > 10) {
-        if (errorDisplay) errorDisplay.innerText = "Error: Password must be 8 to 10 characters long.";
+        if (errorDisplay) errorDisplay.innerText = "Error: Password must be 8-10 characters.";
         return;
     }
 
@@ -80,7 +80,6 @@ window.handleAuthRegistration = async function() {
     document.getElementById('credentials-form-container').style.display = 'none';
 };
 
-// Path B: ClassLink Simulation Processing Engine
 window.requestClassLinkPIN = function() {
     const classLinkId = document.getElementById('classlink-student-id').value.trim();
     if (!classLinkId) { alert("Please supply a valid ClassLink node ID."); return; }
@@ -98,34 +97,34 @@ function triggerPINDelivery() {
     alert(`[VibeCord Security System]: Your confirmation verification code is: ${generatedSecurityPIN}`);
     
     document.getElementById('auth-title').innerText = "Confirm Security Token";
-    document.getElementById('auth-subtitle').innerText = "Authentication code transmitted to current browser terminal log.";
+    document.getElementById('auth-subtitle').innerText = "Authentication code sent to terminal log.";
     document.getElementById('pin-verification-container').style.display = 'block';
 }
+// CHUNK 4: DATABASE PROFILE SECURITY HANDSHAKE VALIDATION
 
-// Global Validation Handshake Controller
 window.verifySecurityHandshake = async function() {
     const enteredPin = document.getElementById('security-pin-input').value.trim();
     const pinError = document.getElementById('pin-error-msg');
     
     if (enteredPin !== generatedSecurityPIN && enteredPin !== "000000") {
-        if (pinError) pinError.innerText = "Error: Verification PIN sequence mismatch.";
+        if (pinError) pinError.innerText = "Error: PIN sequence mismatch.";
         return;
     }
 
     try {
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/vibecord_users?email=eq.${encodeURIComponent(cachedEmail)}`, {
+        const checkRes = await fetch(SUPABASE_URL + "/rest/v1/vibecord_users?email=eq." + encodeURIComponent(cachedEmail), {
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
         });
         const users = await checkRes.json();
 
         if (users && users.length > 0) {
             if (activeAuthMode === 'credentials' && users[0].password !== cachedPassword) {
-                if (pinError) pinError.innerText = "Error: Bad profile mapping password logic match.";
+                if (pinError) pinError.innerText = "Error: Profile password mismatch.";
                 return;
             }
             myNickname = users[0].username;
         } else {
-            await fetch(`${SUPABASE_URL}/rest/v1/vibecord_users`, {
+            await fetch(SUPABASE_URL + "/rest/v1/vibecord_users", {
                 method: 'POST',
                 headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify([{ email: cachedEmail, username: cachedUsername, password: cachedPassword }])
@@ -138,60 +137,15 @@ window.verifySecurityHandshake = async function() {
         
         if (nicknameInput) nicknameInput.value = myNickname;
         if (nicknameDisplay) nicknameDisplay.innerText = myNickname;
+        
+        renderFriendsList();
 
-        if (cachedPassword === ADMIN_PASSWORD || cachedUsername === "admin") {
-            if (adminEntryBtn) adminEntryBtn.style.display = "block";
-            logMessage('System', '⚠️ Security Alert: Master Admin Access Cleared.', 'system');
-        }
-
-        fetchAndUpdateLogDisplay();
-
-    } catch (e) { if (pinError) pinError.innerText = "Database mapping query failure."; }
+    } catch (e) { 
+        if (pinError) pinError.innerText = "Database mapping query failure."; 
+    }
 };
+// CHUNK 5: FRIENDS MANAGER, MESSAGING STRUCTURES, AND LONG-POLLING LIVE LOGIC
 
-// Fetch Global Announcement data from Supabase
-async function fetchAndUpdateLogDisplay() {
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config?key=eq.update_log`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-        });
-        const data = await res.json();
-        if (data && data.length > 0) {
-            const config = data[0].value;
-            document.getElementById('modal-title').innerText = config.title;
-            
-            let listHtml = `<p><strong>Live Update Tracking Summary:</strong></p><ul>`;
-            config.notes.forEach(note => { listHtml += `<li>${note}</li>`; });
-            listHtml += `</ul>`;
-            
-            document.getElementById('modal-body').innerHTML = listHtml;
-            document.getElementById('update-modal').style.display = 'flex';
-        }
-    } catch(e) { document.getElementById('update-modal').style.display = 'flex'; }
-}
-
-window.closeUpdateLog = function() { document.getElementById('update-modal').style.display = 'none'; };
-window.triggerAdminAuth = function() { document.getElementById('admin-modal').style.display = 'flex'; };
-window.closeAdminPanel = function() { document.getElementById('admin-modal').style.display = 'none'; };
-
-window.saveGlobalUpdates = async function() {
-    const newTitle = document.getElementById('admin-title-input').value.trim() || "🚀 Server System Update Log";
-    const notesText = document.getElementById('admin-notes-input').value.trim();
-    const notesArray = notesText.split('\n').filter(line => line.trim() !== '');
-
-    try {
-        await fetch(`${SUPABASE_URL}/rest/v1/app_config?key=eq.update_log`, {
-            method: 'PATCH',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ value: { title: newTitle, notes: notesArray } })
-        });
-        alert("Global changes updated successfully!");
-        closeAdminPanel();
-        location.reload();
-    } catch (e) { alert("Failed to update change logs."); }
-};
-
-// Friends Framework Management Routing
 if (addFriendBtn) {
     addFriendBtn.addEventListener('click', () => {
         const targetId = friendIdInput.value.trim();
@@ -214,7 +168,7 @@ function renderFriendsList() {
         const item = document.createElement('div');
         item.classList.add('friend-item');
         if (id === activePeerId) item.classList.add('active');
-        item.innerHTML = `<div class="status-dot"></div><span>${friendsMap[id].name}</span>`;
+        item.innerHTML = '<div class="status-dot"></div><span>' + friendsMap[id].name + '</span>';
         item.addEventListener('click', () => selectFriend(id));
         friendsListContainer.appendChild(item);
     });
@@ -247,9 +201,7 @@ async function sendSignal(receiver, type, payloadData) {
                 created_at: new Date().toISOString()
             }])
         });
-    } catch (e) { 
-        console.error("Network drop."); 
-    }
+    } catch (e) { console.error("Transmission error."); }
 }
 
 if (messageInput) {
@@ -326,3 +278,5 @@ function logMessage(sender, text, type) {
     chatBox.appendChild(msgEl);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+if (myIdDisplay) myIdDisplay.innerText = myId;
