@@ -1,11 +1,13 @@
 const SUPABASE_URL = "https://supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_L2bIt4md08OvoEg0iqDaxg_DbjVEMCf";
 
+// SECRET ACCESS CODES: Change your nickname to this password to unlock admin button!
+const ADMIN_PASSWORD = "mysecretadminpass"; 
+
 const myId = "user_" + Math.random().toString(36).substring(2, 9);
 let activePeerId = null;
 let myNickname = "ChromebookUser";
 
-// Local state caching systems
 let friendsMap = JSON.parse(localStorage.getItem('chat_friends_list')) || {};
 let messagesDatabase = JSON.parse(localStorage.getItem('chat_history_cache')) || {};
 
@@ -17,14 +19,71 @@ const friendsListContainer = document.getElementById('friends-list');
 const activeChatTitle = document.getElementById('active-chat-title');
 const chatBox = document.getElementById('chat-box');
 const messageInput = document.getElementById('message-input');
+const adminEntryBtn = document.getElementById('admin-entry-btn');
 
 myIdDisplay.innerText = myId;
 renderFriendsList();
-logMessage('System', 'Welcome! Click Add Friend using your partner\'s User ID to connect.', 'system');
+fetchAndUpdateLogDisplay();
 
+// Check if username field contains the secret password key to spawn the admin tool
 nicknameInput.addEventListener('input', () => {
     myNickname = nicknameInput.value.trim() || "ChromebookUser";
+    if (myNickname === ADMIN_PASSWORD) {
+        adminEntryBtn.style.display = "block";
+        logMessage('System', '⚠️ Security Alert: Master Admin Access Cleared.', 'system');
+    } else {
+        adminEntryBtn.style.display = "none";
+    }
 });
+
+// Fetch Global Announcement data from Supabase
+async function fetchAndUpdateLogDisplay() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config?key=eq.update_log`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        const data = await res.json();
+        if (data && data[0]) {
+            const config = data[0].value;
+            document.getElementById('modal-title').innerText = config.title;
+            
+            let listHtml = `<p><strong>Live Update Tracking Summary:</strong></p><ul>`;
+            config.notes.forEach(note => { listHtml += `<li>${note}</li>`; });
+            listHtml += `</ul>`;
+            
+            document.getElementById('modal-body').innerHTML = listHtml;
+            document.getElementById('update-modal').style.display = 'flex';
+        }
+    } catch(e) { document.getElementById('update-modal').style.display = 'flex'; }
+}
+
+function closeUpdateLog() { document.getElementById('update-modal').style.display = 'none'; }
+function triggerAdminAuth() { document.getElementById('admin-modal').style.display = 'flex'; }
+function closeAdminPanel() { document.getElementById('admin-modal').style.display = 'none'; }
+
+// Update parameters inside database engine
+async function saveGlobalUpdates() {
+    const newTitle = document.getElementById('admin-title-input').value.trim() || "🚀 Server System Update Log";
+    const notesText = document.getElementById('admin-notes-input').value.trim();
+    const notesArray = notesText.split('\n').filter(line => line.trim() !== '');
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/app_config?key=eq.update_log`, {
+            method: 'PATCH',
+            headers: { 
+                'apikey': SUPABASE_KEY, 
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({
+                value: { title: newTitle, notes: notesArray }
+            })
+        });
+        alert("Global changes updated successfully!");
+        closeAdminPanel();
+        location.reload(); // Refresh viewport parameters
+    } catch (e) { alert("Failed to communicate updates to network registry."); }
+}
 
 // Add Friend Logic
 addFriendBtn.addEventListener('click', () => {
@@ -58,13 +117,10 @@ function selectFriend(id) {
     activeChatTitle.innerText = `# ${friendsMap[id].name}`;
     messageInput.disabled = false;
     messageInput.placeholder = `Message # ${friendsMap[id].name}`;
-    
-    // Send background greeting so they automatically add you back
     sendSignal(activePeerId, 'handshake', { name: myNickname });
     loadChatHistory(activePeerId);
 }
 
-// Data Package Handlers
 async function sendSignal(receiver, type, payloadData) {
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/p2p_signals`, {
@@ -74,7 +130,7 @@ async function sendSignal(receiver, type, payloadData) {
                 sender_id: myId, receiver_id: receiver, type: type, payload: payloadData, created_at: new Date().toISOString()
             }])
         });
-    } catch (e) { console.error("Network sync lag."); }
+    } catch (e) { console.error("Sync error."); }
 }
 
 messageInput.addEventListener('keypress', (e) => {
@@ -92,10 +148,7 @@ function saveAndRenderLocalMessage(peer, sender, text, type) {
     if (!messagesDatabase[peer]) messagesDatabase[peer] = [];
     messagesDatabase[peer].push({ sender, text, type });
     localStorage.setItem('chat_history_cache', JSON.stringify(messagesDatabase));
-    
-    if (peer === activePeerId) {
-        logMessage(sender, text, type);
-    }
+    if (peer === activePeerId) logMessage(sender, text, type);
 }
 
 function loadChatHistory(peer) {
@@ -105,7 +158,6 @@ function loadChatHistory(peer) {
     }
 }
 
-// Global Polling Engine Framework
 let lastCheckedTimestamp = new Date().toISOString();
 setInterval(async () => {
     try {
@@ -118,18 +170,14 @@ setInterval(async () => {
         
         if (freshPackets.length > 0) {
             lastCheckedTimestamp = freshPackets[freshPackets.length - 1].created_at;
-            
             freshPackets.forEach(packet => {
                 const sender = packet.sender_id;
-                
-                // If an unknown user sends a message/handshake, add them to your friends interface automatically
                 if (!friendsMap[sender]) {
                     const claimedName = packet.payload.name || packet.payload.senderName || "User";
                     friendsMap[sender] = { id: sender, name: `@${claimedName}` };
                     localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
                     renderFriendsList();
                 }
-
                 if (packet.type === 'handshake') {
                     friendsMap[sender].name = `@${packet.payload.name}`;
                     localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
@@ -139,7 +187,7 @@ setInterval(async () => {
                 }
             });
         }
-    } catch (err) { console.log("Re-syncing nodes..."); }
+    } catch (err) {}
 }, 1500);
 
 function logMessage(sender, text, type) {
