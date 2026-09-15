@@ -1,88 +1,116 @@
 body {
-    font-family: 'gg sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'gg sans', 'Segoe UI', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #313338; /* Discord dark background */
-    color: #dbdee1; /* Discord text color */
+    background-color: #313338;
+    color: #dbdee1;
     display: flex;
-    justify-content: center;
-    align-items: center;
     height: 100vh;
 }
 
-.chat-container {
-    width: 600px;
-    height: 550px;
-    background: #2b2d31; /* Discord container color */
-    border-radius: 8px;
+.app-container {
     display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
 }
 
-.header {
-    background: #1e1f22;
-    padding: 15px;
-    border-bottom: 1px solid #1f2023;
-}
-
-h2 {
-    margin: 0 0 8px 0;
-    color: #fff;
-    font-size: 18px;
-}
-
-.id-section, .connect-section {
-    font-size: 13px;
-    color: #b5bac1;
-    margin-bottom: 5px;
-}
-
-.id-value {
-    color: #5865f2; /* Discord Blurple */
-    font-family: monospace;
-    font-size: 14px;
-}
-
-.connect-section {
+/* Discord Friends Sidebar Layout */
+.sidebar {
+    width: 240px;
+    background: #2b2d31;
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
+    flex-direction: column;
+    border-right: 1px solid #1f2023;
 }
 
-input[type="text"] {
+.profile-area {
+    background: #232428;
+    padding: 15px;
+    font-size: 13px;
+    border-bottom: 1px solid #1e1f22;
+}
+
+.my-id-tag {
+    color: #5865f2;
+    font-family: monospace;
+    font-weight: bold;
+    display: block;
+    margin-top: 4px;
+}
+
+.friend-controls {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid #1e1f22;
+}
+
+.friend-controls input {
     background: #1e1f22;
     border: none;
     border-radius: 4px;
-    padding: 8px 12px;
+    padding: 8px;
     color: #dbdee1;
-    font-size: 14px;
-    flex-grow: 1;
+    font-size: 13px;
 }
 
-input[type="text"]:focus {
-    outline: 1px solid #5865f2;
-}
-
-button {
-    background: #5865f2; /* Discord Blurple */
+.friend-controls button {
+    background: #248046; /* green add friend button */
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: 500;
+    padding: 8px;
     cursor: pointer;
-    transition: background 0.2s;
+    font-weight: 600;
 }
 
-button:hover {
-    background: #4752c4;
+.friends-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
 }
 
-button:disabled {
-    background: #4f545c;
-    cursor: not-allowed;
+.friend-item {
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.friend-item:hover, .friend-item.active {
+    background: #35373c;
+    color: #fff;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #23a55a;
+}
+
+/* Chat Screen Main Framework */
+.main-chat {
+    flex-grow: 1;
+    background: #313338;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background: #313338;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    border-bottom: 1px solid #1f2023;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 #chat-box {
@@ -91,13 +119,13 @@ button:disabled {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .msg {
-    max-width: 85%;
-    line-height: 1.4;
+    max-width: 80%;
     font-size: 15px;
+    line-height: 1.4;
 }
 
 .system {
@@ -111,17 +139,17 @@ button:disabled {
 .me {
     align-self: flex-end;
     background: #35373c;
-    padding: 8px 14px;
+    padding: 10px 14px;
     border-radius: 12px 12px 0 12px;
     border-right: 4px solid #5865f2;
 }
 
 .peer {
     align-self: flex-start;
-    background: #35373c;
-    padding: 8px 14px;
+    background: #2b2d31;
+    padding: 10px 14px;
     border-radius: 12px 12px 12px 0;
-    border-left: 4px solid #23a55a; /* Discord Green */
+    border-left: 4px solid #23a55a;
 }
 
 .sender-name {
@@ -136,11 +164,22 @@ button:disabled {
 
 .input-section {
     padding: 20px;
-    background: #2b2d31;
+    background: #313338;
+}
+
+.input-wrapper {
     display: flex;
-    gap: 10px;
+    background: #383a40;
+    border-radius: 8px;
+    padding: 10px;
+    align-items: center;
 }
 
 #message-input {
-    background: #383a40;
+    background: transparent;
+    border: none;
+    color: #dbdee1;
+    flex-grow: 1;
+    font-size: 15px;
+    outline: none;
 }
