@@ -8,14 +8,51 @@
 </head>
 <body>
 
+    <!-- Dynamic Update Log Custom Modal -->
+    <div class="modal-overlay" id="update-modal" style="display: none;">
+        <div class="update-card">
+            <div class="update-header">
+                <h3 id="modal-title">🚀 Server System Update Log</h3>
+            </div>
+            <div class="update-body" id="modal-body">
+                <!-- Injected via JavaScript from Supabase storage -->
+            </div>
+            <div class="update-footer">
+                <button onclick="closeUpdateLog()">Awesome, let's chat!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Secret Admin Control Panel Modal -->
+    <div class="modal-overlay" id="admin-modal" style="display: none;">
+        <div class="update-card">
+            <div class="update-header">
+                <h3>🔧 Admin Console: Modify Global Change Logs</h3>
+            </div>
+            <div class="update-body">
+                <label style="display:block; margin-bottom:5px;">Modal Banner Title:</label>
+                <input type="text" id="admin-title-input" style="width:95%; padding:8px; background:#1e1f22; border:none; color:white; margin-bottom:15px; border-radius:4px;">
+                
+                <label style="display:block; margin-bottom:5px;">Update Logs (One note per line):</label>
+                <textarea id="admin-notes-input" rows="5" style="width:95%; padding:8px; background:#1e1f22; border:none; color:white; border-radius:4px; font-family:sans-serif; resize:none;"></textarea>
+            </div>
+            <div class="update-footer" style="gap:10px;">
+                <button onclick="closeAdminPanel()" style="background:#4f545c;">Cancel</button>
+                <button onclick="saveGlobalUpdates()" style="background:#248046;">Publish Globally</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
-        <!-- Sidebar Navigation Elements -->
         <div class="sidebar">
             <div class="profile-area">
                 <span>NICKNAME:</span>
                 <input type="text" id="nickname-input" value="ChromebookUser" style="width:90%; background:#1e1f22; border:none; color:white; padding:4px; margin-top:4px; border-radius:4px;">
                 <span style="display:block; margin-top:8px;">YOUR CHAT ID:</span>
                 <span id="my-id" class="my-id-tag">Generating...</span>
+                
+                <!-- Secret Admin Spawn Point Anchor -->
+                <button id="admin-entry-btn" onclick="triggerAdminAuth()" style="display:none; width:100%; margin-top:10px; background:#5865f2; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold;">🔧 Admin Controls</button>
             </div>
             
             <div class="friend-controls">
@@ -23,12 +60,9 @@
                 <button id="add-friend-btn">Add Friend</button>
             </div>
             
-            <div class="friends-list-container" id="friends-list">
-                <!-- Added friends dynamically populate down here -->
-            </div>
+            <div class="friends-list-container" id="friends-list"></div>
         </div>
 
-        <!-- Main Window Area -->
         <div class="main-chat">
             <div class="chat-header" id="active-chat-title"># select-a-friend</div>
             <div id="chat-box"></div>
