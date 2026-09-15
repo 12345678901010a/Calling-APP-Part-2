@@ -1,9 +1,16 @@
 // SUPABASE CREDENTIALS CONFIGURATION
-const SUPABASE_URL = "https://supabase.co"; 
+const SUPABASE_URL = "https://epuorjlqocrlfqberngi.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_L2bIt4md08OvoEg0iqDaxg_DbjVEMCf";
 
-// Links directly to the script code loaded by supabase-lib.js
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Smart check to make sure the custom library initializes perfectly
+let supabaseClient;
+if (window.supabase && typeof window.supabase.createClient === 'function') {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} else if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'function') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} else {
+    console.error("Database connection failed: library elements not loaded.");
+}
 
 // Generate a random unblocked ID for yourself
 const myId = "user_" + Math.random().toString(36).substring(2, 9);
@@ -20,28 +27,34 @@ const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 
 // Display user session identification setup
-myIdDisplay.innerText = myId;
+if (myIdDisplay) {
+    myIdDisplay.innerText = myId;
+}
 logMessage('System', `Welcome! Signed in as session ID. Ready to receive signals.`, 'system');
 
-nicknameInput.addEventListener('input', () => {
-    myNickname = nicknameInput.value.trim() || "ChromebookUser";
-});
+if (nicknameInput) {
+    nicknameInput.addEventListener('input', () => {
+        myNickname = nicknameInput.value.trim() || "ChromebookUser";
+    });
+}
 
 // Connect to a friend using their randomly generated session ID
-connectBtn.addEventListener('click', () => {
-    const target = peerIdInput.value.trim();
-    if (!target || target === myId) return;
-    
-    peerId = target;
-    logMessage('System', `Connected to channel target session: ${peerId}`, 'system');
-    
-    // Announce username payload package
-    sendSignal('name', { name: myNickname });
-});
+if (connectBtn) {
+    connectBtn.addEventListener('click', () => {
+        const target = peerIdInput.value.trim();
+        if (!target || target === myId) return;
+        
+        peerId = target;
+        logMessage('System', `Connected to channel target session: ${peerId}`, 'system');
+        
+        // Announce username payload package
+        sendSignal('name', { name: myNickname });
+    });
+}
 
 // Send messaging packet infrastructure using Supabase database insertions
 async function sendSignal(type, payloadData) {
-    if (!peerId) return;
+    if (!peerId || !supabaseClient) return;
     await supabaseClient.from('p2p_signals').insert([
         { sender_id: myId, receiver_id: peerId, type: type, payload: payloadData }
     ]);
@@ -56,28 +69,33 @@ function triggerSend() {
     messageInput.value = '';
 }
 
-sendBtn.addEventListener('click', triggerSend);
-messageInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') triggerSend();
-});
+if (sendBtn) sendBtn.addEventListener('click', triggerSend);
+if (messageInput) {
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') triggerSend();
+    });
+}
 
 // Listen live to data transmission using Supabase Realtime Channels Engine
-supabaseClient
-  .channel('public:p2p_signals')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'p2p_signals', filter: `receiver_id=eq.${myId}` }, (payload) => {
-      const data = payload.new;
-      peerId = data.sender_id; // Lock on connection automatically from sender packets
-      
-      if (data.type === 'name') {
-          peerNickname = data.payload.name;
-          logMessage('System', `@${peerNickname} joined your active terminal connection room.`, 'system');
-      } else if (data.type === 'text') {
-          logMessage(peerNickname, data.payload.text, 'peer');
-      }
-  })
-  .subscribe();
+if (supabaseClient) {
+    supabaseClient
+      .channel('public:p2p_signals')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'p2p_signals', filter: `receiver_id=eq.${myId}` }, (payload) => {
+          const data = payload.new;
+          peerId = data.sender_id; // Lock on connection automatically from sender packets
+          
+          if (data.type === 'name') {
+              peerNickname = data.payload.name;
+              logMessage('System', `@${peerNickname} joined your active terminal connection room.`, 'system');
+          } else if (data.type === 'text') {
+              logMessage(peerNickname, data.payload.text, 'peer');
+          }
+      })
+      .subscribe();
+}
 
 function logMessage(sender, text, type) {
+    if (!chatBox) return;
     const msgEl = document.createElement('div');
     msgEl.classList.add('msg', type);
     
