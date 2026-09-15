@@ -1,8 +1,8 @@
 // SUPABASE CREDENTIALS CONFIGURATION
-const SUPABASE_URL = "https://epuorjlqocrlfqberngi.supabase.co"; 
+const SUPABASE_URL = "https://supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_L2bIt4md08OvoEg0iqDaxg_DbjVEMCf";
 
-// Initialize Supabase Engine Connection Client
+// Links directly to the script code loaded by supabase-lib.js
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Generate a random unblocked ID for yourself
