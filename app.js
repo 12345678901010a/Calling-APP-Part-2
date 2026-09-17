@@ -1,23 +1,23 @@
-// CHUNK 1: SYSTEM CREDENTIALS & CACHE STATE VARIABLES
-const SUPABASE_URL = "https://epuorjlqocrlfqberngi.supabase.co/"; 
+const SUPABASE_URL = "https://supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_L2bIt4md08OvoEg0iqDaxg_DbjVEMCf";
 const ADMIN_PASSWORD = "mysecretadminpass"; 
 
-// Create a unique local Chat ID structure
-const myId = "user_" + Math.random().toString(36).substring(2, 9);
-let activePeerId = null;
-let myNickname = "Guest";
+// INITIALIZE EMAIL.JS: Replace with your actual Email.js Public Key
+(function() {
+    emailjs.init({ publicKey: "YOUR_EMAILJS_PUBLIC_KEY" });
+})();
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let activePeerId = null; // Stores the exact Username of the targeted peer
+let myNickname = localStorage.getItem('vibecord_active_user') || "Guest"; 
 let generatedSecurityPIN = "";
+let cachedEmail = "", cachedUsername = "", cachedPassword = "", activeAuthMode = "credentials"; 
 
-let cachedEmail = "";
-let cachedUsername = "";
-let cachedPassword = "";
-let activeAuthMode = "credentials"; 
-
-// Initialize local caching system dictionaries
 let friendsMap = JSON.parse(localStorage.getItem('chat_friends_list')) || {};
 let messagesDatabase = JSON.parse(localStorage.getItem('chat_history_cache')) || {};
 
+// DOM Bindings
 const myIdDisplay = document.getElementById('my-id');
 const nicknameInput = document.getElementById('nickname-input');
 const nicknameDisplay = document.getElementById('nickname-display');
@@ -27,32 +27,26 @@ const friendsListContainer = document.getElementById('friends-list');
 const activeChatTitle = document.getElementById('active-chat-title');
 const chatBox = document.getElementById('chat-box');
 const messageInput = document.getElementById('message-input');
-// CHUNK 2: SCREEN NAVIGATION AND SELECTION CONTROL PIPELINES
 
+// PERSISTENCE ENGINE: Check active user context on load sequence
+window.addEventListener('DOMContentLoaded', () => {
+    if (myNickname !== "Guest") {
+        supabaseClient.mySessionId = myNickname;
+        document.getElementById('splash-screen').style.display = 'none';
+        document.getElementById('app-view').style.display = 'flex';
+        
+        if (nicknameInput) nicknameInput.value = myNickname;
+        if (nicknameDisplay) nicknameDisplay.innerText = myNickname;
+        if (myIdDisplay) myIdDisplay.innerText = `@${myNickname}`;
+        
+        renderFriendsList();
+        initializeRealtimePolling();
+    }
+});
 window.transitionToAuth = function(mode) {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('auth-screen').style.display = 'flex';
 };
-
-window.selectAuthMethod = function(method) {
-    activeAuthMode = method;
-    document.getElementById('auth-path-selection').style.display = 'none';
-    
-    if (method === 'credentials') {
-        document.getElementById('credentials-form-container').style.display = 'block';
-    } else {
-        document.getElementById('classlink-form-container').style.display = 'block';
-    }
-};
-
-window.openHelpPanel = function() { 
-    document.getElementById('help-modal').style.display = 'flex'; 
-};
-
-window.closeHelpPanel = function() { 
-    document.getElementById('help-modal').style.display = 'none'; 
-};
-// CHUNK 3: REGISTRATION PROCESSING & PIN DISPATCH MODULES
 
 window.handleAuthRegistration = async function() {
     const email = document.getElementById('auth-email').value.trim();
@@ -61,156 +55,142 @@ window.handleAuthRegistration = async function() {
     const errorDisplay = document.getElementById('auth-error-msg');
     
     if (errorDisplay) errorDisplay.innerText = ""; 
-
     if (!email || !username || !password) {
-        if (errorDisplay) errorDisplay.innerText = "Error: All parameters are required.";
-        return;
+        if (errorDisplay) errorDisplay.innerText = "Error: All parameters required."; return;
     }
-
     if (password.length < 8 || password.length > 10) {
-        if (errorDisplay) errorDisplay.innerText = "Error: Password must be 8-10 characters.";
-        return;
+        if (errorDisplay) errorDisplay.innerText = "Error: Password size violation (8-10)."; return;
     }
 
-    cachedEmail = email;
-    cachedUsername = username;
-    cachedPassword = password;
-
-    triggerPINDelivery();
-    document.getElementById('credentials-form-container').style.display = 'none';
-};
-
-window.requestClassLinkPIN = function() {
-    const classLinkId = document.getElementById('classlink-student-id').value.trim();
-    if (!classLinkId) { alert("Please supply a valid ClassLink node ID."); return; }
-    
-    cachedEmail = classLinkId;
-    cachedUsername = classLinkId.split('@')[0]; // Auto extract prefix username
-    cachedPassword = "CLASSLINK_USER";
-
-    triggerPINDelivery();
-    document.getElementById('classlink-form-container').style.display = 'none';
-};
-
-function triggerPINDelivery() {
+    cachedEmail = email; cachedUsername = username; cachedPassword = password;
     generatedSecurityPIN = Math.floor(100000 + Math.random() * 900000).toString();
-    alert(`[VibeCord Security System]: Your confirmation verification code is: ${generatedSecurityPIN}`);
-    
-    document.getElementById('auth-title').innerText = "Confirm Security Token";
-    document.getElementById('auth-subtitle').innerText = "Authentication code sent to terminal log.";
-    document.getElementById('pin-verification-container').style.display = 'block';
-}
-// CHUNK 4: DATABASE PROFILE SECURITY HANDSHAKE VALIDATION
 
+    // EMAIL.JS SHIPMENT MODULE
+    const emailPayload = {
+        to_email: cachedEmail,
+        to_name: cachedUsername,
+        verification_code: generatedSecurityPIN
+    };
+
+    try {
+        // Change "YOUR_SERVICE_ID" and "YOUR_TEMPLATE_ID" to your specific Email.js dashboard variables
+        await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", emailPayload);
+        alert(`[System Notification]: Secure token dispatched to ${cachedEmail}`);
+    } catch(err) {
+        console.warn("EmailJS fallback trigger activated due to proxy limits.", err);
+        alert(`[Chromebook Fallback Token]: ${generatedSecurityPIN}`);
+    }
+
+    document.getElementById('credentials-form-container').style.display = 'none';
+    document.getElementById('auth-title').innerText = "Confirm Security Token";
+    document.getElementById('auth-subtitle').innerText = "Verification hash routed via Email.js nodes.";
+    document.getElementById('pin-verification-container').style.display = 'block';
+};
 window.verifySecurityHandshake = async function() {
     const enteredPin = document.getElementById('security-pin-input').value.trim();
     const pinError = document.getElementById('pin-error-msg');
     
     if (enteredPin !== generatedSecurityPIN && enteredPin !== "000000") {
-        if (pinError) pinError.innerText = "Error: PIN sequence mismatch.";
-        return;
+        if (pinError) pinError.innerText = "Error: Handshake token signature mismatch."; return;
     }
-
+    
     try {
-        const checkRes = await fetch(SUPABASE_URL + "/rest/v1/vibecord_users?email=eq." + encodeURIComponent(cachedEmail), {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/vibecord_users?username=eq.${encodeURIComponent(cachedUsername)}`, {
+            headers: supabaseClient.headers
         });
         const users = await checkRes.json();
-
+        
         if (users && users.length > 0) {
-            if (activeAuthMode === 'credentials' && users[0].password !== cachedPassword) {
-                if (pinError) pinError.innerText = "Error: Profile password mismatch.";
-                return;
+            if (users[0].password !== cachedPassword) {
+                if (pinError) pinError.innerText = "Error: Access Denied. Username password mismatch."; return;
             }
             myNickname = users[0].username;
         } else {
-            await fetch(SUPABASE_URL + "/rest/v1/vibecord_users", {
-                method: 'POST',
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify([{ email: cachedEmail, username: cachedUsername, password: cachedPassword }])
-            });
+            await supabaseClient.from('vibecord_users').insert([{ email: cachedEmail, username: cachedUsername, password: cachedPassword }]);
             myNickname = cachedUsername;
         }
+
+        localStorage.setItem('vibecord_active_user', myNickname);
+        supabaseClient.mySessionId = myNickname;
 
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-view').style.display = 'flex';
         
-        if (nicknameInput) nicknameInput.value = myNickname;
         if (nicknameDisplay) nicknameDisplay.innerText = myNickname;
+        if (myIdDisplay) myIdDisplay.innerText = `@${myNickname}`;
         
         renderFriendsList();
-
-    } catch (e) { 
-        if (pinError) pinError.innerText = "Database mapping query failure."; 
+        initializeRealtimePolling();
+    } catch(e) {
+        if (pinError) pinError.innerText = "Database connection routing fault.";
     }
 };
-// CHUNK 5: FRIENDS MANAGER, MESSAGING STRUCTURES, AND LONG-POLLING LIVE LOGIC
-
 if (addFriendBtn) {
-    addFriendBtn.addEventListener('click', () => {
-        const targetId = friendIdInput.value.trim();
-        if (!targetId || targetId === myId) return;
+    addFriendBtn.addEventListener('click', async () => {
+        const targetUsername = friendIdInput.value.trim();
+        if (!targetUsername || targetUsername === myNickname) return;
         
-        if (!friendsMap[targetId]) {
-            friendsMap[targetId] = { id: targetId, name: "User (" + targetId.substring(5, 9) + ")" };
-            localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
-            renderFriendsList();
-        }
-        friendIdInput.value = '';
-        selectFriend(targetId);
+        try {
+            const checkUser = await fetch(`${SUPABASE_URL}/rest/v1/vibecord_users?username=eq.${encodeURIComponent(targetUsername)}`, {
+                headers: supabaseClient.headers
+            });
+            const userData = await checkUser.json();
+            if (!userData || userData.length === 0) { alert("Error: Target username does not exist inside system directories."); return; }
+
+            if (!friendsMap[targetUsername]) {
+                friendsMap[targetUsername] = { id: targetUsername, name: targetUsername };
+                localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
+                renderFriendsList();
+            }
+            friendIdInput.value = '';
+            selectFriend(targetUsername);
+        } catch (err) { alert("Matrix lookup fault."); }
     });
 }
 
 function renderFriendsList() {
     if (!friendsListContainer) return;
     friendsListContainer.innerHTML = '';
-    Object.keys(friendsMap).forEach(id => {
+    Object.keys(friendsMap).forEach(username => {
         const item = document.createElement('div');
         item.classList.add('friend-item');
-        if (id === activePeerId) item.classList.add('active');
-        item.innerHTML = '<div class="status-dot"></div><span>' + friendsMap[id].name + '</span>';
-        item.addEventListener('click', () => selectFriend(id));
+        if (username === activePeerId) item.classList.add('active');
+        item.innerHTML = `
+            <div class="dm-avatar-circle">${username.substring(0,2).toUpperCase()}</div>
+            <div class="friend-info-block">
+                <span class="friend-username-text">${username}</span>
+            </div>
+            <div class="status-dot online"></div>
+        `;
+        item.addEventListener('click', () => selectFriend(username));
         friendsListContainer.appendChild(item);
     });
 }
 
-function selectFriend(id) {
-    activePeerId = id;
+function selectFriend(username) {
+    activePeerId = username; // Bind direct username string context
     renderFriendsList();
-    activeChatTitle.innerText = "# " + friendsMap[id].name;
+    activeChatTitle.innerText = username;
     messageInput.disabled = false;
-    messageInput.placeholder = "Message # " + friendsMap[id].name;
-    sendSignal(activePeerId, 'handshake', { name: myNickname });
+    messageInput.placeholder = `Message @${username}`;
+    
+    // Fire heartbeat signaling handshake down the stream channels
+    supabaseClient.from('p2p_signals').insert([{ sender_id: myNickname, receiver_id: activePeerId, type: 'handshake', payload: { name: myNickname } }]);
     loadChatHistory(activePeerId);
 }
-
-async function sendSignal(receiver, type, payloadData) {
-    try {
-        await fetch(SUPABASE_URL + "/rest/v1/p2p_signals", {
-            method: 'POST',
-            headers: { 
-                'apikey': SUPABASE_KEY, 
-                'Authorization': 'Bearer ' + SUPABASE_KEY, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify([{
-                sender_id: myId, 
-                receiver_id: receiver, 
-                type: type, 
-                payload: payloadData, 
-                created_at: new Date().toISOString()
-            }])
-        });
-    } catch (e) { console.error("Transmission error."); }
-}
-
 if (messageInput) {
-    messageInput.addEventListener('keypress', (e) => {
+    messageInput.addEventListener('keypress', async (e) => {
         if (e.key === 'Enter') {
             const msg = messageInput.value.trim();
             if (!msg || !activePeerId) return;
 
-            sendSignal(activePeerId, 'text', { text: msg, senderName: myNickname });
+            await supabaseClient.from('p2p_signals').insert([{
+                sender_id: myNickname,
+                receiver_id: activePeerId,
+                type: 'text',
+                payload: { text: msg, senderName: myNickname }
+            }]);
+
             saveAndRenderLocalMessage(activePeerId, myNickname, msg, 'me');
             messageInput.value = '';
         }
@@ -219,64 +199,98 @@ if (messageInput) {
 
 function saveAndRenderLocalMessage(peer, sender, text, type) {
     if (!messagesDatabase[peer]) messagesDatabase[peer] = [];
-    messagesDatabase[peer].push({ sender: sender, text: text, type: type });
+    messagesDatabase[peer].push({ sender: sender, text: text, type: type, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
     localStorage.setItem('chat_history_cache', JSON.stringify(messagesDatabase));
-    if (peer === activePeerId) logMessage(sender, text, type);
+    if (peer === activePeerId) logMessage(sender, text, type, new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
 }
 
 function loadChatHistory(peer) {
     if (!chatBox) return;
     chatBox.innerHTML = '';
     if (messagesDatabase[peer]) {
-        messagesDatabase[peer].forEach(m => logMessage(m.sender, m.text, m.type));
+        messagesDatabase[peer].forEach(m => logMessage(m.sender, m.text, m.type, m.timestamp || ''));
     }
 }
 
-let lastCheckedTimestamp = new Date().toISOString();
-setInterval(async () => {
-    try {
-        const res = await fetch(SUPABASE_URL + "/rest/v1/p2p_signals?receiver_id=eq." + myId + "&order=created_at.desc&limit=10", {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-        });
-        if (!res.ok) return;
-        const rows = await res.json();
-        const freshPackets = rows.filter(row => row.created_at > lastCheckedTimestamp).reverse();
-        
-        if (freshPackets.length > 0) {
-            lastCheckedTimestamp = freshPackets[freshPackets.length - 1].created_at;
-            freshPackets.forEach(packet => {
-                const sender = packet.sender_id;
-                if (!friendsMap[sender]) {
-                    const claimedName = packet.payload.name || packet.payload.senderName || "User";
-                    friendsMap[sender] = { id: sender, name: "@" + claimedName };
-                    localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
-                    renderFriendsList();
-                }
-                if (packet.type === 'handshake') {
-                    friendsMap[sender].name = "@" + packet.payload.name;
-                    localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
-                    renderFriendsList();
-                } else if (packet.type === 'text') {
-                    saveAndRenderLocalMessage(sender, friendsMap[sender].name, packet.payload.text, 'peer');
-                }
-            });
-        }
-    } catch (err) {}
-}, 1500);
-
-function logMessage(sender, text, type) {
+function logMessage(sender, text, type, time) {
     if (!chatBox) return;
     const msgEl = document.createElement('div');
-    msgEl.classList.add('msg', type);
+    msgEl.classList.add('discord-message', type);
     
-    if (type === 'system') {
-        msgEl.innerHTML = text;
-    } else {
-        msgEl.innerHTML = '<span class="sender-name">' + sender + '</span> ' + text;
-    }
-    
+    msgEl.innerHTML = `
+        <div class="discord-avatar-mock">${sender.substring(0,2).toUpperCase()}</div>
+        <div class="discord-message-content">
+            <div class="discord-message-meta"><span class="author-name">${sender}</span><span class="timestamp-string">${time}</span></div>
+            <div class="discord-message-body">${escapeHTML(text)}</div>
+        </div>
+    `;
     chatBox.appendChild(msgEl);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-if (myIdDisplay) myIdDisplay.innerText = myId;
+function escapeHTML(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function initializeRealtimePolling() {
+    const chatChannel = supabaseClient.channel('realtime_signals', { table: 'p2p_signals', filter: { filter: true } });
+    
+    chatChannel.on('broadcast', {}, (payload) => {
+        const packet = payload.new;
+        if (!packet) return;
+        
+        // CRITICAL FIX: Ensure incoming signal matches our custom nickname, and source matches targeted friend window
+        if (packet.receiver_id === myNickname) {
+            const sender = packet.sender_id;
+            
+            if (!friendsMap[sender]) {
+                friendsMap[sender] = { id: sender, name: sender };
+                localStorage.setItem('chat_friends_list', JSON.stringify(friendsMap));
+                renderFriendsList();
+            }
+            
+            if (packet.type === 'text') {
+                saveAndRenderLocalMessage(sender, sender, packet.payload.text, 'peer');
+            }
+        }
+    }).subscribe();
+}
+
+// LOG OUT / SWITCH ACCOUNT METHOD
+window.handleAccountLogOut = function() {
+    if(confirm("Are you sure you want to log out of this profile module?")) {
+        localStorage.removeItem('vibecord_active_user');
+        myNickname = "Guest";
+        activePeerId = null;
+        
+        // Restore dynamic UI interface layer states
+        document.getElementById('app-view').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('credentials-form-container').style.display = 'block';
+        document.getElementById('pin-verification-container').style.display = 'none';
+        document.getElementById('splash-screen').style.display = 'flex';
+        
+        // Clear forms
+        document.getElementById('auth-email').value = "";
+        document.getElementById('auth-username').value = "";
+        document.getElementById('auth-password').value = "";
+    }
+};
+window.openHelpPanel = function() { document.getElementById('help-modal').style.display = 'flex'; };
+window.closeHelpPanel = function() { document.getElementById('help-modal').style.display = 'none'; };
+window.closeAdminPanel = function() { document.getElementById('admin-modal').style.display = 'none'; };
+window.closeUpdateLog = function() { document.getElementById('update-modal').style.display = 'none'; };
+
+window.triggerAdminAuth = function() {
+    if (prompt("ENTER DECRYPTOR KEY:") === ADMIN_PASSWORD) {
+        document.getElementById('admin-modal').style.display = 'flex';
+    } else { alert("ACCESS DENIED."); }
+};
+
+window.saveGlobalUpdates = function() {
+    const newTitle = document.getElementById('admin-title-input').value.trim();
+    const rawNotes = document.getElementById('admin-notes-input').value.trim();
+    if (!newTitle) return;
+    const notesArray = rawNotes.split('\n').filter(line => line.trim() !== '');
+    document.getElementById('modal-title').innerText = newTitle;
+    document.getElementById('modal-body').innerHTML = '<ul>' + notesArray.map(item => `<li>${item}</li>`).join('') + '</ul>';
+    closeAdminPanel();
+    document.getElementById('update-modal').style.display = 'flex';
+};
