@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VibeCord Portal</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Official Email.js Client Library Injection Layer -->
+    <script type="text/javascript" src="https://jsdelivr.net"></script>
 </head>
 <body>
 
@@ -20,7 +22,6 @@
             <p>Imagine a place... where you can text your friends, manage your contacts matrix, and stay completely connected inside your campus terminal node room.</p>
             
             <div class="hero-buttons">
-                <!-- Large Centralized Access Triggers -->
                 <button class="btn-blue-large" onclick="transitionToAuth('register')">Sign Up / Register Now</button>
                 <button class="btn-white-large" onclick="transitionToAuth('login')">Sign In to Account</button>
             </div>
@@ -28,12 +29,12 @@
 
         <div class="features-grid">
             <div class="feature-card">
-                <h3>💬 Live Chat</h3>
+                <h3>💬 Live Chat Matrix</h3>
                 <p>Exchange text payloads safely using automated local database caching layers.</p>
             </div>
             <div class="feature-card">
-                <h3>🔒 Secure Login</h3>
-                <p>Authenticates your session identity using advanced network validation steps.</p>
+                <h3>🔒 Secure Email verification</h3>
+                <p>Authenticates your session identity via dedicated real-time Email.js network handshakes.</p>
             </div>
         </div>
     </div>
@@ -42,16 +43,10 @@
     <div class="auth-wrapper" id="auth-screen" style="display: none;">
         <div class="auth-card" style="width: 440px;">
             <h2 id="auth-title">Welcome to VibeCord</h2>
-            <p class="auth-subtitle" id="auth-subtitle">Choose your secure sign-in pathway below:</p>
+            <p class="auth-subtitle" id="auth-subtitle">Create or authenticate your account credentials:</p>
             
-            <!-- Selection Layer: Alternative Sign-In Paths -->
-            <div id="auth-path-selection" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                <button class="btn-blue-large" style="border-radius: 4px; padding: 12px;" onclick="selectAuthMethod('credentials')">🔐 Sign In with Username / Password</button>
-                <button class="btn-white-large" style="border-radius: 4px; padding: 12px; background: #248046; color: white;" onclick="selectAuthMethod('classlink')">🏫 Verify with ClassLink Identity</button>
-            </div>
-
             <!-- Path A Form: Direct Credentials Entry -->
-            <div class="auth-form" id="credentials-form-container" style="display: none;">
+            <div class="auth-form" id="credentials-form-container">
                 <label>EMAIL ADDRESS</label>
                 <input type="email" id="auth-email" placeholder="name@school.org">
                 
@@ -65,16 +60,9 @@
                 <button id="login-submit-btn" onclick="handleAuthRegistration()" style="width:100%;">Continue Lifecycle</button>
             </div>
 
-            <!-- Path B Form: ClassLink Simulation -->
-            <div class="auth-form" id="classlink-form-container" style="display: none;">
-                <label>CLASSLINK STUDENT CARD ID</label>
-                <input type="text" id="classlink-student-id" placeholder="student.number@schooldistrict">
-                <button onclick="requestClassLinkPIN()" style="width: 100%; background: #5865f2; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Request Secure Portal PIN</button>
-            </div>
-
-            <!-- Step 2: 6-Digit PIN Security Handshake Validation Dock -->
+            <!-- Step 2: Email.js 6-Digit PIN Security Verification Dock -->
             <div class="auth-form" id="pin-verification-container" style="display: none;">
-                <label style="text-align: center; display: block;">ENTER VERIFICATION SECURITY PIN</label>
+                <label style="text-align: center; display: block;">ENTER VERIFICATION PIN SENT TO EMAIL</label>
                 <input type="text" id="security-pin-input" placeholder="000000" maxlength="6" style="text-align:center; letter-spacing:6px; font-size:18px; font-weight:bold; margin-top:5px;">
                 <div id="pin-error-msg" class="auth-error"></div>
                 <button id="pin-submit-btn" onclick="verifySecurityHandshake()" style="width:100%;">Verify & Authorize Profile</button>
@@ -84,22 +72,88 @@
         </div>
     </div>
 
-    <!-- STAGE 3: Help Modal Overlay -->
+    <!-- STAGE 3: Main Discord-Vibe Navigation Workspace Viewport -->
+    <div class="app-container" id="app-view" style="display:none;">
+        
+        <!-- Discord Server Icon Strips (Left rail) -->
+        <div class="guilds-sidebar">
+            <div class="guild-icon active-guild">🌐</div>
+            <div class="guild-separator"></div>
+            <div class="guild-icon dm-icon">💬</div>
+        </div>
+
+        <!-- Channels & Friends Sub-Panel -->
+        <div class="sidebar">
+            <div class="search-bar">
+                <button class="search-btn">Find or start a conversation</button>
+            </div>
+            
+            <div class="friend-controls">
+                <label style="color:#949ba4; font-size:12px; font-weight:bold;">DIRECT MESSAGES</label>
+                <div style="display:flex; gap:6px; margin-top:5px;">
+                    <input type="text" id="friend-id-input" placeholder="Enter target username...">
+                    <button id="add-friend-btn">Add</button>
+                </div>
+            </div>
+            
+            <!-- List Elements Dynamic Injection Target Box -->
+            <div class="friends-list-container" id="friends-list"></div>
+            
+            
+            <div class="profile-area">
+                <div class="user-avatar-wrapper">
+                    <div class="avatar-circle">VC</div>
+                    <div class="avatar-status-dot online"></div>
+                </div>
+                <div class="profile-text-details">
+                    <div id="nickname-display" class="user-profile-nick">Guest</div>
+                    <div id="my-id" class="user-profile-tag">@username</div>
+                </div>
+                <div class="profile-action-buttons">
+                    <button class="icon-action-btn" onclick="triggerAdminAuth()" title="Admin Controls">🔧</button>
+                    <button class="icon-action-btn logout-btn" onclick="handleAccountLogOut()" title="Log Out Account">🚪</button>
+                </div>
+                <input type="hidden" id="nickname-input" value="Guest">
+            </div>
+        </div>
+
+        <!-- Active Chat Window Workspace -->
+        <div class="main-chat">
+            <div class="chat-header">
+                <span class="header-hashtag">@</span>
+                <span id="active-chat-title">select-a-friend</span>
+                <div class="header-status-indicator" id="header-status-dot" style="display:none;"></div>
+            </div>
+            
+            <div id="chat-box">
+                <div class="system-welcome-message">
+                    <h2>Welcome to VibeCord!</h2>
+                    <p>This is the start of your secure serverless terminal node network stream.</p>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" id="message-input" placeholder="Select a friend to message..." disabled>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POPUPS -->
     <div class="modal-overlay" id="help-modal" style="display: none;">
         <div class="update-card">
             <div class="update-header"><h3>❓ VibeCord Help Center</h3></div>
             <div class="update-body">
-                <p><strong>Sign In Options Explained:</strong></p>
+                <p><strong>System Parameters Matrix:</strong></p>
                 <ul>
-                    <li><strong>Manual Email/User:</strong> Set up your own custom profile password. It must be 8–10 characters long.</li>
-                    <li><strong>ClassLink System:</strong> Automatically pulls your parameters from the terminal simulator system registry.</li>
+                    <li><strong>Account Security:</strong> VibeCord relies on Supabase DB storage endpoints combined with Email.js tokens to map configurations completely serverless.</li>
                 </ul>
             </div>
             <div class="update-footer"><button onclick="closeHelpPanel()">Close Help</button></div>
         </div>
     </div>
 
-    <!-- STAGE 4: Dynamic Update Log Custom Modal -->
     <div class="modal-overlay" id="update-modal" style="display: none;">
         <div class="update-card">
             <div class="update-header"><h3 id="modal-title">🚀 VibeCord System Update Log</h3></div>
@@ -108,7 +162,6 @@
         </div>
     </div>
 
-    <!-- STAGE 5: Hidden Secret Admin Control Panel Modal -->
     <div class="modal-overlay" id="admin-modal" style="display: none;">
         <div class="update-card">
             <div class="update-header"><h3>🔧 Admin Console: Modify Global Change Logs</h3></div>
@@ -121,34 +174,6 @@
             <div class="update-footer" style="gap:10px;">
                 <button onclick="closeAdminPanel()" style="background:#4f545c;">Cancel</button>
                 <button onclick="saveGlobalUpdates()" style="background:#248046;">Publish Globally</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- STAGE 6: Main VibeCord Chat UI Viewport -->
-    <div class="app-container" id="app-view" style="display:none;">
-        <div class="sidebar">
-            <div class="profile-area">
-                <span>ACTIVE SESSION PROFILE:</span>
-                <div id="nickname-display" style="color:white; font-weight:bold; font-size:15px; margin:4px 0 8px 0;">Guest</div>
-                <input type="hidden" id="nickname-input" value="Guest">
-                <span>YOUR CHAT ID:</span>
-                <span id="my-id" class="my-id-tag">Generating...</span>
-                <button id="admin-entry-btn" onclick="triggerAdminAuth()" style="display:none; width:100%; margin-top:10px; background:#5865f2; color:white; border:none; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold;">🔧 Admin Controls</button>
-            </div>
-            <div class="friend-controls">
-                <input type="text" id="friend-id-input" placeholder="Enter friend's Chat ID...">
-                <button id="add-friend-btn">Add Friend</button>
-            </div>
-            <div class="friends-list-container" id="friends-list"></div>
-        </div>
-        <div class="main-chat">
-            <div class="chat-header" id="active-chat-title"># select-a-friend</div>
-            <div id="chat-box"></div>
-            <div class="input-section">
-                <div class="input-wrapper">
-                    <input type="text" id="message-input" placeholder="Select a friend to message..." disabled>
-                </div>
             </div>
         </div>
     </div>
